@@ -97,7 +97,7 @@ export default function Home() {
                   Generating amazing praise...
                 </span>
               ) : (
-                '✨ Glaze My Profile ✨'
+                'Glaze Me'
               )}
             </button>
           </form>
@@ -138,7 +138,7 @@ export default function Home() {
             <div className="prose prose-lg max-w-none">
               <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 p-6 rounded-lg border-l-4 border-yellow-500 backdrop-blur-sm">
                 <h3 className="text-xl font-bold text-yellow-300 mb-4 flex items-center">
-                  🎉 AI Generated Praise
+                  Profile Evaluation
                 </h3>
                 <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
                   {result}

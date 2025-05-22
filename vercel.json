@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/api/glaze-profile/route.ts": {
+      "maxDuration": 30
+    }
+  }
+} 

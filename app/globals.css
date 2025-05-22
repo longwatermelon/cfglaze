@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 15, 15, 15;
+  --background-end-rgb: 26, 26, 26;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f0f23 75%, #0a0a0a 100%);
+}
+
+.gradient-bg-alt {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-shadow {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+.card-shadow-hover {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.8);
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Dark theme input styles */
+.dark-input {
+  background-color: #1a1a1a;
+  border-color: #333333;
+  color: #ffffff;
+}
+
+.dark-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.dark-input::placeholder {
+  color: #666666;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+} 

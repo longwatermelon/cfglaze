@@ -1,172 +1,120 @@
-# Codeforces Profile Glazer 🏆
+# Codeforces Glazer
 
-A fun web application that takes your Codeforces username and generates enthusiastic, AI-powered praise of your competitive programming skills! Perfect for motivation and sharing your achievements.
+> Boost your competitive programming confidence with AI-powered praise for your Codeforces profile and code submissions!
 
-## Features ✨
+## 🚀 Features
 
-- Fetches comprehensive Codeforces profile data
-- AI-powered enthusiastic praise generation
-- Beautiful modern UI with dark theme
-- Rate limiting protection
-- Real-time submission analysis
-- Responsive design for all devices
+- **Profile Glazing**: Enter your Codeforces handle and receive an enthusiastic, over-the-top evaluation of your competitive programming achievements
+- **Code Glazing**: Upload your code submissions to get enthusiastic praise for your algorithms, coding style, and problem-solving approaches
+- **Modern UI**: Clean, responsive design with pleasing aesthetics
+- **AI-Powered**: Uses OpenAI's GPT-4o-mini to generate personalized, motivational feedback
+- **Comprehensive Analysis**: Evaluates ratings, ranks, submission history, and code quality
 
-## Tech Stack 🛠️
+## 🎯 Why Use Codeforces Glazer?
+
+Need a confidence boost in your competitive programming journey? Codeforces Glazer transforms your statistics and code into enthusiastic praise that highlights your strengths and achievements. It's the perfect antidote to competitive programming burnout!
+
+## 📸 Screenshots
+
+![Profile Glazer Screenshot](https://example.com/profile-glazer-screenshot.png)
+![Code Glazer Screenshot](https://example.com/code-glazer-screenshot.png)
+
+## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **AI**: OpenAI GPT-4o-mini
-- **APIs**: Codeforces API
+- **External APIs**: Codeforces API, OpenAI API
 - **Deployment**: Vercel
 
-## Setup Instructions 🚀
+## 📋 Local Development
 
-### 1. Prerequisites
+### Prerequisites
 
-- Node.js 18.18.0+ (but <19.0.0)
+- Node.js 18+
 - npm or yarn
 - OpenAI API key
 
-### 2. Clone and Install
+### Installation
 
-```bash
-git clone <repository-url>
-cd codeforces-glazer
-npm install
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/codeforces-glazer.git
+   cd codeforces-glazer
+   ```
 
-### 3. Environment Configuration
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-Create a `.env.local` file in the root directory:
+3. Create a `.env.local` file with your OpenAI API key:
+   ```
+   OPENAI_API_KEY=your_api_key_here
+   ```
 
-```bash
-# OpenAI Configuration (required)
-OPENAI_API_KEY=your-openai-api-key
+4. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-# Optional: Vercel KV for rate limiting (recommended for production)
-KV_URL=your-vercel-kv-url
-KV_REST_API_URL=your-vercel-kv-rest-url
-KV_REST_API_TOKEN=your-vercel-kv-token
-KV_REST_API_READ_ONLY_TOKEN=your-vercel-kv-readonly-token
-```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-**OpenAI API Key:**
-- Sign up at [OpenAI](https://platform.openai.com/)
-- Create an API key in your dashboard
-- Add billing information (GPT-4o-mini is very cost-effective)
+## 🚀 Usage
 
-**Important:** The `NEXT_PUBLIC_` prefix makes the hCaptcha site key available to the frontend
+### Profile Glazing
 
-### 4. Development
+1. Navigate to the "Profile Glazer" tab
+2. Enter your Codeforces username
+3. Click "Glaze My Profile"
+4. Enjoy the enthusiastic evaluation of your competitive programming journey!
 
-```bash
-npm run dev
-```
+### Code Glazing
 
-Visit [http://localhost:3000](http://localhost:3000)
+1. Navigate to the "Code Glazer" tab
+2. Upload your code file (max 500KB)
+3. Click "Glaze My Code"
+4. Receive an enthusiastic analysis of your code's brilliance!
 
-### 5. Production Deployment
+## 📝 License
 
-Deploy to Vercel (recommended):
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-```bash
-npm install -g vercel
-vercel
-```
+## 🤝 Contributing
 
-Set environment variables in Vercel dashboard:
-- `OPENAI_API_KEY`
-- `NEXT_PUBLIC_HCAPTCHA_SITE_KEY`: Your hCaptcha site key for frontend (required)
-- `HCAPTCHA_SECRET_KEY`: Your hCaptcha secret key for backend verification (required)
-- Vercel KV variables (if using)
-
-**Required Environment Variables:**
-- `OPENAI_API_KEY`: Your OpenAI API key for AI generation (required)
-- Vercel KV variables for rate limiting (optional but recommended)
-
-## Usage 💡
-
-1. Enter your Codeforces username
-2. Wait for the AI to fetch your profile and generate amazing praise
-3. Share your personalized glaze with friends!
-
-## API Endpoints 🔌
-
-### POST `/api/glaze-profile`
-
-Generate AI praise for a Codeforces profile.
-
-**Request Body:**
-```json
-{
-  "username": "your_codeforces_handle",
-  "honeypot": ""
-}
-```
-
-**Response:**
-```json
-{
-  "glaze": "AI-generated praise text...",
-  "userData": {
-    "handle": "username",
-    "rating": 1500,
-    "maxRating": 1600,
-    "rank": "specialist",
-    "maxRank": "expert"
-  },
-  "tokensUsed": 2500
-}
-```
-
-## Security & Rate Limiting
-
-The application implements multiple layers of protection:
-
-- **IP-based Rate Limiting**: 4 requests per day per IP address
-- **Request Validation**: Origin and user-agent checks to block obvious bots
-- **Input Sanitization**: Username validation and honeypot fields
-- **Size Limits**: Request size capping to prevent memory exhaustion
-- **OpenAI Token Limits**: 2M tokens daily limit for cost control
-
-## Cost Considerations 💰
-
-- Uses GPT-4o-mini (~$0.15 per 1M input tokens)
-- Average request uses 2000-4000 tokens
-- Daily limit of 2M tokens ≈ $0.30-0.60/day maximum
-- Actual costs much lower due to rate limiting
-
-## Development Notes 📝
-
-### File Structure
-```
-app/
-├── page.tsx           # Main frontend interface
-├── layout.tsx         # Root layout
-├── globals.css        # Global styles
-└── api/
-    └── glaze-profile/
-        └── route.ts   # Main API handler
-```
-
-### Key Dependencies
-- `next`: 14.0.4
-- `openai`: ^4.20.1
-- `axios`: ^1.6.2
-- `@vercel/kv`: ^0.2.4
-
-For development/testing, hCaptcha provides test keys:
-- Site key: `10000000-ffff-ffff-ffff-000000000001`
-- Secret key: `0x0000000000000000000000000000000000000000`
-
-## Contributing 🤝
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License 📄
+## 📊 API Usage Limits
 
-This project is open source and available under the MIT License.
+- Each IP address can make up to 4 requests per day
+- The application has a global token limit to prevent excessive API usage
+- File uploads are limited to 500KB to prevent abuse
+
+## 💡 Future Improvements
+
+- [ ] Add social sharing functionality for glazed profiles and code
+- [ ] Implement user accounts to save glazed evaluations
+- [ ] Add support for bulk code evaluation
+- [ ] Expand the analysis to include more Codeforces contest metrics
+- [ ] Create a browser extension for inline glazing on Codeforces
+
+## 👏 Acknowledgements
+
+- [Codeforces](https://codeforces.com/) for their public API
+- [OpenAI](https://openai.com/) for their powerful language models
+- [Vercel](https://vercel.com/) for hosting
+
+---
+
+Made with ❤️ for competitive programmers everywhere
+
+*Note: This project is not officially affiliated with Codeforces.*

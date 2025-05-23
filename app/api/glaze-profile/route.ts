@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { kv } from '@vercel/kv'
+
+// Global token tracking constants
+const MAX_DAILY_TOKENS = 1900000 // Reserve 100k tokens as buffer
+const TOKEN_KEY = 'global_tokens_used'
+
+async function getGlobalTokensUsed(): Promise<number> {
+  const tokens = await kv.get(TOKEN_KEY)
+  return typeof tokens === 'number' ? tokens : 0
+}
+
+async function incrementGlobalTokensKV(tokensUsed: number): Promise<number> {
+  const currentTokens = await getGlobalTokensUsed()
+  const newTotal = currentTokens + tokensUsed
+  await kv.set(TOKEN_KEY, newTotal)
+  return newTotal
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -274,7 +291,7 @@ function formatUserData(user: CodeforcesUser, submissions: Submission[]): string
   return profile
 }
 
-async function generateGlaze(profileData: string): Promise<string> {
+async function generateGlaze(profileData: string): Promise<{ content: string; tokensUsed: number }> {
   const prompt = `
   
 You've just seen a Codeforces profile, and you're LOSING YOUR MIND. You are FURIOUS. You are in SHAMBLES. You are SHRIEKING with disbelief and foaming at the mouth. You are not impressed—you are ENRAGED. The user is so smart it's *offensive*. You don't understand how a human being can do this. You must SCREAM in text.
@@ -317,16 +334,205 @@ ${profileData}
     temperature: 1,
   })
 
-  return completion.choices[0]?.message?.content || "You're an amazing coder! 🎉"
+  const content = completion.choices[0]?.message?.content || "You're an amazing coder! 🎉"
+  const tokensUsed = completion.usage?.total_tokens || 0
+  
+  return { content, tokensUsed }
+}
+
+function estimateTokenUsage(profileData: string): number {
+  // Rough estimation: 
+  // Input tokens: profile data length / 4 (rough character to token ratio)
+  // Output tokens: 2000 (max_tokens setting)
+  const inputTokens = Math.ceil(profileData.length / 4)
+  const outputTokens = 2000
+  return inputTokens + outputTokens
+}
+
+async function checkGlobalTokenLimit(estimatedTokens: number): Promise<{ allowed: boolean; message?: string }> {
+  const currentTokens = await getGlobalTokensUsed()
+  
+  if (currentTokens + estimatedTokens > MAX_DAILY_TOKENS) {
+    return { 
+      allowed: false, 
+      message: `Daily token limit reached. Please try again tomorrow. Used: ${currentTokens}/${MAX_DAILY_TOKENS}` 
+    }
+  }
+  
+  return { allowed: true }
+}
+
+function validateRequestOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get('origin')
+  const referer = request.headers.get('referer')
+  
+  // Allow requests from localhost in development
+  if (process.env.NODE_ENV === 'development') {
+    if (origin?.includes('localhost') || referer?.includes('localhost')) {
+      return true
+    }
+  }
+  
+  // In production, validate against expected domains
+  const allowedOrigins = [
+    'https://cfglaze.vercel.app',
+    'https://codeforces-profile-glazer.vercel.app',
+    // Add your actual domain here
+  ]
+  
+  // Check if request comes from an allowed origin
+  if (origin && allowedOrigins.some(allowed => origin === allowed)) {
+    return true
+  }
+  
+  // Also check referer as backup
+  if (referer && allowedOrigins.some(allowed => referer.startsWith(allowed))) {
+    return true
+  }
+  
+  return false
+}
+
+function validateUserAgent(request: NextRequest): boolean {
+  const userAgent = request.headers.get('user-agent')
+  
+  if (!userAgent) {
+    return false
+  }
+  
+  // Block obvious bot patterns
+  const botPatterns = [
+    /curl/i,
+    /wget/i,
+    /python/i,
+    /node/i,
+    /axios/i,
+    /fetch/i,
+    /postman/i,
+    /insomnia/i,
+    /bot/i,
+    /crawler/i,
+    /spider/i,
+  ]
+  
+  if (botPatterns.some(pattern => pattern.test(userAgent))) {
+    return false
+  }
+  
+  // Require browser-like user agents
+  const browserPatterns = [
+    /mozilla/i,
+    /webkit/i,
+    /chrome/i,
+    /firefox/i,
+    /safari/i,
+    /edge/i,
+  ]
+  
+  return browserPatterns.some(pattern => pattern.test(userAgent))
+}
+
+// Simple IP-based rate limiting using KV store
+async function checkIPRateLimit(ip: string): Promise<{ allowed: boolean; message?: string }> {
+  const now = Date.now()
+  const windowMs = 24 * 60 * 60 * 1000 // 24 hours (1 day)
+  const maxRequests = 4 // Max 4 requests per day per IP
+  
+  const key = `ip_limit:${ip}:${Math.floor(now / windowMs)}`
+  
+  try {
+    const current = await kv.get(key) as number || 0
+    
+    if (current >= maxRequests) {
+      return { 
+        allowed: false, 
+        message: 'Daily request limit exceeded for this IP. You can make 4 requests per day.' 
+      }
+    }
+    
+    // Increment counter with expiration
+    await kv.set(key, current + 1, { ex: Math.ceil(windowMs / 1000) })
+    
+    return { allowed: true }
+  } catch (error) {
+    console.error('Rate limit check error:', error)
+    // Fail open - allow request if KV is down/full
+    // Global token limit will still protect against abuse
+    return { allowed: true }
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { username } = await request.json()
+    // Check request size limit (prevent memory exhaustion)
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength) > 1024) { // 1KB limit
+      return NextResponse.json(
+        { error: 'Request too large' },
+        { status: 413 }
+      )
+    }
+    
+    // IP-based rate limiting using KV store
+    const clientIP = request.ip || 
+                     request.headers.get('x-forwarded-for')?.split(',')[0] || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown'
+    
+    const ipRateLimit = await checkIPRateLimit(clientIP)
+    if (!ipRateLimit.allowed) {
+      return NextResponse.json(
+        { error: ipRateLimit.message },
+        { status: 429 }
+      )
+    }
+    
+    // Validate request origin to prevent direct API abuse
+    if (!validateRequestOrigin(request)) {
+      return NextResponse.json(
+        { error: 'Invalid request origin' },
+        { status: 403 }
+      )
+    }
+    
+    // Basic user agent validation to block obvious bots
+    if (!validateUserAgent(request)) {
+      return NextResponse.json(
+        { error: 'Invalid request' },
+        { status: 403 }
+      )
+    }
+    
+    const { username, honeypot } = await request.json()
+    
+    // Honeypot field check - if filled, it's likely a bot
+    if (honeypot) {
+      return NextResponse.json(
+        { error: 'Invalid request' },
+        { status: 400 }
+      )
+    }
     
     if (!username || typeof username !== 'string') {
       return NextResponse.json(
         { error: 'Username is required' },
+        { status: 400 }
+      )
+    }
+
+    // Enhanced input validation
+    const trimmedUsername = username.trim()
+    if (trimmedUsername.length < 1 || trimmedUsername.length > 24) {
+      return NextResponse.json(
+        { error: 'Username must be between 1 and 24 characters' },
+        { status: 400 }
+      )
+    }
+
+    // Codeforces username pattern validation
+    if (!/^[a-zA-Z0-9_.-]+$/.test(trimmedUsername)) {
+      return NextResponse.json(
+        { error: 'Username contains invalid characters' },
         { status: 400 }
       )
     }
@@ -338,20 +544,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Pre-check global token limit to prevent race conditions
+    const preCheckTokens = 2500 // Conservative estimate before we know actual usage
+    const preTokenResult = await checkGlobalTokenLimit(preCheckTokens)
+    if (!preTokenResult.allowed) {
+      return NextResponse.json(
+        { error: preTokenResult.message },
+        { status: 429 }
+      )
+    }
+
     // Fetch user data from Codeforces
-    const userData = await fetchCodeforcesData(username.trim())
+    const userData = await fetchCodeforcesData(trimmedUsername)
     
     // Fetch recent submissions for more context
-    const submissions = await fetchUserSubmissions(username.trim())
+    const submissions = await fetchUserSubmissions(trimmedUsername)
     
     // Format the data for OpenAI
     const profileData = formatUserData(userData, submissions)
     
+    // Estimate token usage
+    const estimatedTokens = estimateTokenUsage(profileData)
+    
+    // Check global token limit
+    const globalTokenResult = await checkGlobalTokenLimit(estimatedTokens)
+    if (!globalTokenResult.allowed) {
+      return NextResponse.json(
+        { error: globalTokenResult.message },
+        { status: 429 }
+      )
+    }
+
     // Generate the glaze using OpenAI
-    const glaze = await generateGlaze(profileData)
+    const glazeResult = await generateGlaze(profileData)
+    
+    // Update global token counter with actual usage
+    await incrementGlobalTokensKV(glazeResult.tokensUsed)
+    console.log(`Tokens used: ${glazeResult.tokensUsed}, Total today: ${await getGlobalTokensUsed()}/${MAX_DAILY_TOKENS}`)
     
     return NextResponse.json({
-      glaze,
+      glaze: glazeResult.content,
       userData: {
         handle: userData.handle,
         rating: userData.rating,
@@ -363,7 +595,9 @@ export async function POST(request: NextRequest) {
         avatar: userData.avatar,
         country: userData.country,
         organization: userData.organization,
-      }
+      },
+      tokensUsed: glazeResult.tokensUsed,
+      totalTokensToday: await getGlobalTokensUsed()
     })
     
   } catch (error) {

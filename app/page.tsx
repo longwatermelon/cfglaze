@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface CodeforcesData {
   handle: string
@@ -20,15 +20,42 @@ export default function Home() {
   const [result, setResult] = useState('')
   const [error, setError] = useState('')
   const [userData, setUserData] = useState<CodeforcesData | null>(null)
+  const [lastRequestTime, setLastRequestTime] = useState(0)
+  const [requestCount, setRequestCount] = useState(0)
+  const [tokensUsed, setTokensUsed] = useState(0)
+  const [totalTokensToday, setTotalTokensToday] = useState(0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!username.trim()) return
 
+    // Client-side rate limiting
+    const now = Date.now()
+    const timeSinceLastRequest = now - lastRequestTime
+    
+    if (timeSinceLastRequest < 20000) { // 20 seconds between requests
+      setError('Please wait 20 seconds between requests')
+      return
+    }
+
+    // Basic input validation
+    const trimmedUsername = username.trim()
+    if (trimmedUsername.length < 1 || trimmedUsername.length > 24) {
+      setError('Username must be between 1 and 24 characters')
+      return
+    }
+
+    if (!/^[a-zA-Z0-9_.-]+$/.test(trimmedUsername)) {
+      setError('Username can only contain letters, numbers, dots, hyphens, and underscores')
+      return
+    }
+
     setLoading(true)
     setError('')
     setResult('')
     setUserData(null)
+    setLastRequestTime(now)
+    setRequestCount(prev => prev + 1)
 
     try {
       const response = await fetch('/api/glaze-profile', {
@@ -36,7 +63,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: username.trim() }),
+        body: JSON.stringify({ 
+          username: trimmedUsername,
+          honeypot: '' // Empty honeypot field
+        }),
       })
 
       const data = await response.json()
@@ -47,6 +77,9 @@ export default function Home() {
 
       setResult(data.glaze)
       setUserData(data.userData)
+      setTokensUsed(data.tokensUsed || 0)
+      setTotalTokensToday(data.totalTokensToday || 0)
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -68,6 +101,15 @@ export default function Home() {
 
         <div className="bg-dark-card border border-dark-border rounded-2xl card-shadow p-8 mb-8 transition-all duration-300 hover:card-shadow-hover hover:bg-dark-cardHover">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Honeypot field - hidden from humans */}
+            <input
+              type="text"
+              name="website"
+              style={{ display: 'none' }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+            
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
                 Codeforces Username
@@ -80,7 +122,17 @@ export default function Home() {
                 className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-white placeholder-gray-500"
                 placeholder="Enter your Codeforces handle..."
                 disabled={loading}
+                maxLength={24}
               />
+              {requestCount > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                </p>
+              )}
+              {totalTokensToday > 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Global tokens used today: {totalTokensToday.toLocaleString()}/1.9M limit
+                </p>
+              )}
             </div>
             
             <button
@@ -139,6 +191,11 @@ export default function Home() {
               <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 p-6 rounded-lg border-l-4 border-yellow-500 backdrop-blur-sm">
                 <h3 className="text-xl font-bold text-yellow-300 mb-4 flex items-center">
                   Profile Evaluation
+                  {tokensUsed > 0 && (
+                    <span className="ml-2 text-xs text-gray-400 font-normal">
+                      ({tokensUsed} tokens used)
+                    </span>
+                  )}
                 </h3>
                 <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
                   {result}

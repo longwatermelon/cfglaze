@@ -327,7 +327,7 @@ async function checkIPRateLimit(ip: string): Promise<{ allowed: boolean; message
       return { allowed: true }
     }
     
-    if (rateData.count >= 4) { // 4 requests per day per IP
+    if (rateData.count >= 8) { // 8 requests per day per IP
       const timeRemaining = Math.ceil((rateData.resetTime - now) / (1000 * 60 * 60))
       return { 
         allowed: false, 

@@ -122,6 +122,9 @@ export default function Home() {
                 disabled={loading}
                 maxLength={24}
               />
+              <p className="text-sm text-gray-400 mt-2">
+                Each IP address can make 4 requests per day
+              </p>
             </div>
             
             <button

@@ -115,33 +115,25 @@ Generate AI praise for a Codeforces profile.
     "rank": "specialist",
     "maxRank": "expert"
   },
-  "tokensUsed": 2500,
-  "totalTokensToday": 15000
+  "tokensUsed": 2500
 }
 ```
 
-## Security Features 🔒
+## Security & Rate Limiting
 
-- IP-based rate limiting (2 requests per minute)
-- Global token usage tracking (1.9M tokens daily limit)
-- Honeypot fields to catch simple bots
-- Origin validation for API requests
-- User-Agent filtering to block obvious bots
-- Input validation and sanitization
-- Request size limits
+The application implements multiple layers of protection:
 
-## Rate Limiting 🚦
-
-- **Per IP**: 2 requests per minute
-- **Global**: 1.9M OpenAI tokens per day
-- **Client-side**: 20 seconds between requests
-- **Codeforces API**: Respects 1 request per second limit
+- **IP-based Rate Limiting**: 4 requests per day per IP address
+- **Request Validation**: Origin and user-agent checks to block obvious bots
+- **Input Sanitization**: Username validation and honeypot fields
+- **Size Limits**: Request size capping to prevent memory exhaustion
+- **OpenAI Token Limits**: 2M tokens daily limit for cost control
 
 ## Cost Considerations 💰
 
 - Uses GPT-4o-mini (~$0.15 per 1M input tokens)
 - Average request uses 2000-4000 tokens
-- Daily limit of 1.9M tokens ≈ $0.30-0.60/day maximum
+- Daily limit of 2M tokens ≈ $0.30-0.60/day maximum
 - Actual costs much lower due to rate limiting
 
 ## Development Notes 📝

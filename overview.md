@@ -139,7 +139,6 @@ npm run dev
 - **Honeypot Fields**: Hidden form fields to catch simple bots
 - **Origin Validation**: Ensures requests come from legitimate frontend domains
 - **User-Agent Filtering**: Blocks obvious bot patterns and requires browser-like agents
-- **Global Token Tracking**: Prevents exceeding daily OpenAI token limits
 - **Security Headers**: Additional HTTP security headers via Vercel configuration
 - **Error Handling**: No sensitive information exposed in error messages
 

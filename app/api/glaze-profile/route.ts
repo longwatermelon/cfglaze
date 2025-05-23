@@ -3,19 +3,154 @@ import OpenAI from 'openai'
 import { kv } from '@vercel/kv'
 
 // Global token tracking constants
-const MAX_DAILY_TOKENS = 1900000 // Reserve 100k tokens as buffer
-const TOKEN_KEY = 'global_tokens_used'
+const MAX_DAILY_TOKENS = 2000000 // 2M tokens daily limit
+const TOKEN_KEY = 'global_tokens_used_v3'
+
+// Short-term cache in KV to ensure read-after-write consistency
+const CACHE_KEY = 'global_tokens_cache_v3'
+const CACHE_TTL = 5 // 5 seconds - shorter for production
 
 async function getGlobalTokensUsed(): Promise<number> {
-  const tokens = await kv.get(TOKEN_KEY)
-  return typeof tokens === 'number' ? tokens : 0
+  try {
+    // Check if we have a recent cached value first (optimistic local state)
+    const cached = await kv.get(CACHE_KEY) as { value: number; timestamp: number } | null
+    if (cached && (Date.now() - cached.timestamp) < (CACHE_TTL * 1000)) {
+      console.log(`Using cached token value: ${cached.value}`)
+      return cached.value
+    }
+    
+    // Fallback to database with retry and verification
+    let attempts = 0
+    const maxAttempts = 3
+    let tokens: any = null
+    
+    while (attempts < maxAttempts) {
+      try {
+        tokens = await kv.get(TOKEN_KEY)
+        
+        if (tokens === null) {
+          // Key doesn't exist, initialize it
+          await kv.set(TOKEN_KEY, 0)
+          
+          // Read-after-write verification for initialization
+          const verified = await kv.get(TOKEN_KEY)
+          if (typeof verified === 'number') {
+            // Update cache for consistency
+            await kv.set(CACHE_KEY, { value: verified, timestamp: Date.now() }, { ex: CACHE_TTL })
+            return verified
+          } else {
+            attempts++
+            continue
+          }
+        } else if (typeof tokens === 'number') {
+          // Valid data, update cache and return
+          await kv.set(CACHE_KEY, { value: tokens, timestamp: Date.now() }, { ex: CACHE_TTL })
+          return tokens
+        } else {
+          // Data corruption detected
+          console.warn(`Token data corruption detected (attempt ${attempts + 1}): ${typeof tokens}`)
+          attempts++
+          if (attempts >= maxAttempts) {
+            console.warn('Max attempts reached, resetting to 0')
+            await kv.set(TOKEN_KEY, 0)
+            await kv.set(CACHE_KEY, { value: 0, timestamp: Date.now() }, { ex: CACHE_TTL })
+            return 0
+          }
+          
+          // Small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 100 * attempts))
+        }
+      } catch (error) {
+        attempts++
+        if (attempts >= maxAttempts) {
+          console.error('Failed to get tokens after max attempts:', error)
+          return 0
+        }
+        await new Promise(resolve => setTimeout(resolve, 100 * attempts))
+      }
+    }
+    
+    return 0
+  } catch (error) {
+    console.error('Error getting tokens:', error)
+    return 0
+  }
 }
 
 async function incrementGlobalTokensKV(tokensUsed: number): Promise<number> {
-  const currentTokens = await getGlobalTokensUsed()
-  const newTotal = currentTokens + tokensUsed
-  await kv.set(TOKEN_KEY, newTotal)
-  return newTotal
+  try {
+    console.log(`Incrementing tokens by ${tokensUsed} at ${new Date().toISOString()}`)
+    
+    let newTotal: number
+    let attempts = 0
+    const maxAttempts = 3
+    
+    while (attempts < maxAttempts) {
+      try {
+        // Read-Modify-Write pattern (like the working project)
+        // 1. Read current value
+        const current = await getGlobalTokensUsed()
+        
+        // 2. Calculate new value locally
+        newTotal = current + tokensUsed
+        
+        // 3. Write the new value
+        await kv.set(TOKEN_KEY, newTotal)
+        
+        // 4. Read-after-write verification (CRITICAL for consistency)
+        const verified = await kv.get(TOKEN_KEY) as number
+        
+        // 5. If verification matches, update cache and break
+        if (verified === newTotal) {
+          await kv.set(CACHE_KEY, { value: newTotal, timestamp: Date.now() }, { ex: CACHE_TTL })
+          console.log(`Token count after read-modify-write: ${newTotal} (verified: ${verified})`)
+          return newTotal
+        } else {
+          console.warn(`Read-after-write verification failed. Expected: ${newTotal}, Got: ${verified}`)
+          attempts++
+          if (attempts >= maxAttempts) {
+            throw new Error(`Consistency verification failed after ${maxAttempts} attempts`)
+          }
+          // Small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 100 * attempts))
+        }
+      } catch (error) {
+        attempts++
+        if (attempts >= maxAttempts) {
+          throw error
+        }
+        // Small delay before retry
+        await new Promise(resolve => setTimeout(resolve, 100 * attempts))
+      }
+    }
+    
+    throw new Error('Failed to increment tokens after maximum attempts')
+  } catch (error) {
+    console.error('Error incrementing tokens:', error)
+    throw error
+  }
+}
+
+async function backgroundReconciliation(): Promise<void> {
+  try {
+    // Clear cache to force fresh read from database
+    await kv.del(CACHE_KEY)
+    
+    // Get fresh value from database
+    const dbValue = await kv.get(TOKEN_KEY) as number | null
+    
+    if (dbValue !== null && typeof dbValue === 'number') {
+      // Update cache with fresh value
+      await kv.set(CACHE_KEY, { value: dbValue, timestamp: Date.now() }, { ex: CACHE_TTL })
+      console.log(`Background reconciliation: Updated cache with DB value ${dbValue}`)
+    } else {
+      console.warn('Background reconciliation: Invalid DB value, initializing to 0')
+      await kv.set(TOKEN_KEY, 0)
+      await kv.set(CACHE_KEY, { value: 0, timestamp: Date.now() }, { ex: CACHE_TTL })
+    }
+  } catch (error) {
+    console.error('Background reconciliation failed:', error)
+  }
 }
 
 const openai = new OpenAI({
@@ -368,9 +503,7 @@ function validateRequestOrigin(request: NextRequest): boolean {
   
   // Allow requests from localhost in development
   if (process.env.NODE_ENV === 'development') {
-    if (origin?.includes('localhost') || referer?.includes('localhost')) {
-      return true
-    }
+    return true // Always allow in development
   }
   
   // In production, validate against expected domains
@@ -398,6 +531,11 @@ function validateUserAgent(request: NextRequest): boolean {
   
   if (!userAgent) {
     return false
+  }
+  
+  // Allow any user agent in development
+  if (process.env.NODE_ENV === 'development') {
+    return true
   }
   
   // Block obvious bot patterns
@@ -434,6 +572,11 @@ function validateUserAgent(request: NextRequest): boolean {
 
 // Simple IP-based rate limiting using KV store
 async function checkIPRateLimit(ip: string): Promise<{ allowed: boolean; message?: string }> {
+  // Skip IP rate limiting in development
+  if (process.env.NODE_ENV === 'development') {
+    return { allowed: true }
+  }
+  
   const now = Date.now()
   const windowMs = 24 * 60 * 60 * 1000 // 24 hours (1 day)
   const maxRequests = 4 // Max 4 requests per day per IP
@@ -578,9 +721,15 @@ export async function POST(request: NextRequest) {
     // Generate the glaze using OpenAI
     const glazeResult = await generateGlaze(profileData)
     
+    // Occasionally run background reconciliation (10% of requests)
+    // This helps maintain consistency like the working project
+    if (Math.random() < 0.1) {
+      console.log('Running background reconciliation...')
+      backgroundReconciliation().catch(err => console.error('Background reconciliation error:', err))
+    }
+    
     // Update global token counter with actual usage
     await incrementGlobalTokensKV(glazeResult.tokensUsed)
-    console.log(`Tokens used: ${glazeResult.tokensUsed}, Total today: ${await getGlobalTokensUsed()}/${MAX_DAILY_TOKENS}`)
     
     return NextResponse.json({
       glaze: glazeResult.content,
@@ -596,8 +745,7 @@ export async function POST(request: NextRequest) {
         country: userData.country,
         organization: userData.organization,
       },
-      tokensUsed: glazeResult.tokensUsed,
-      totalTokensToday: await getGlobalTokensUsed()
+      tokensUsed: glazeResult.tokensUsed
     })
     
   } catch (error) {

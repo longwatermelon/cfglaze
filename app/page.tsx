@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 
 interface CodeforcesData {
   handle: string
@@ -21,26 +21,7 @@ export default function Home() {
   const [error, setError] = useState('')
   const [userData, setUserData] = useState<CodeforcesData | null>(null)
   const [lastRequestTime, setLastRequestTime] = useState(0)
-  const [requestCount, setRequestCount] = useState(0)
   const [tokensUsed, setTokensUsed] = useState(0)
-  const [totalTokensToday, setTotalTokensToday] = useState(0)
-
-  // Fetch current token count on component mount
-  useEffect(() => {
-    const fetchTokenCount = async () => {
-      try {
-        const response = await fetch('/api/tokens')
-        if (response.ok) {
-          const data = await response.json()
-          setTotalTokensToday(data.totalTokensToday || 0)
-        }
-      } catch (error) {
-        console.error('Error fetching token count:', error)
-      }
-    }
-
-    fetchTokenCount()
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,13 +53,14 @@ export default function Home() {
     setResult('')
     setUserData(null)
     setLastRequestTime(now)
-    setRequestCount(prev => prev + 1)
 
     try {
       const response = await fetch('/api/glaze-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         },
         body: JSON.stringify({ 
           username: trimmedUsername,
@@ -95,7 +77,6 @@ export default function Home() {
       setResult(data.glaze)
       setUserData(data.userData)
       setTokensUsed(data.tokensUsed || 0)
-      setTotalTokensToday(data.totalTokensToday || 0)
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -141,13 +122,6 @@ export default function Home() {
                 disabled={loading}
                 maxLength={24}
               />
-              {requestCount > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                </p>
-              )}
-              <p className="text-xs text-gray-400 mt-1">
-                Global tokens used today: {totalTokensToday.toLocaleString()}/1.9M limit
-              </p>
             </div>
             
             <button

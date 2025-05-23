@@ -25,6 +25,23 @@ export default function Home() {
   const [tokensUsed, setTokensUsed] = useState(0)
   const [totalTokensToday, setTotalTokensToday] = useState(0)
 
+  // Fetch current token count on component mount
+  useEffect(() => {
+    const fetchTokenCount = async () => {
+      try {
+        const response = await fetch('/api/tokens')
+        if (response.ok) {
+          const data = await response.json()
+          setTotalTokensToday(data.totalTokensToday || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching token count:', error)
+      }
+    }
+
+    fetchTokenCount()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!username.trim()) return
@@ -128,11 +145,9 @@ export default function Home() {
                 <p className="text-xs text-gray-500 mt-1">
                 </p>
               )}
-              {totalTokensToday > 0 && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Global tokens used today: {totalTokensToday.toLocaleString()}/1.9M limit
-                </p>
-              )}
+              <p className="text-xs text-gray-400 mt-1">
+                Global tokens used today: {totalTokensToday.toLocaleString()}/1.9M limit
+              </p>
             </div>
             
             <button

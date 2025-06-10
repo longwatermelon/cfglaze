@@ -31,6 +31,7 @@ export default function Home() {
   const [codeError, setCodeError] = useState('')
   const [codeTokensUsed, setCodeTokensUsed] = useState(0)
   const [activeTab, setActiveTab] = useState('profile') // 'profile' or 'code'
+  const [codeRequestInProgress, setCodeRequestInProgress] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,6 +137,12 @@ export default function Home() {
       return
     }
     
+    // Prevent duplicate requests
+    if (codeRequestInProgress) {
+      setCodeError('Request already in progress. Please wait.')
+      return
+    }
+    
     // Client-side rate limiting
     const now = Date.now()
     const timeSinceLastRequest = now - lastRequestTime
@@ -146,6 +153,7 @@ export default function Home() {
     }
     
     setCodeLoading(true)
+    setCodeRequestInProgress(true)
     setCodeError('')
     setCodeGlaze('')
     setLastRequestTime(now)
@@ -173,9 +181,12 @@ export default function Home() {
       setCodeGlaze(data.glaze)
       setCodeTokensUsed(data.tokensUsed || 0)
     } catch (err) {
-      setCodeError(err instanceof Error ? err.message : 'An error occurred')
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      // Sanitize error message to prevent XSS
+      setCodeError(errorMessage.replace(/<[^>]*>/g, ''))
     } finally {
       setCodeLoading(false)
+      setCodeRequestInProgress(false)
     }
   }
   

@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('Error fetching token count:', error)
     return NextResponse.json(
       { error: 'Failed to fetch token count' },
       { status: 500 }

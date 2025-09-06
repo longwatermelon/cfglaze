@@ -205,10 +205,10 @@ export default function Home() {
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            🏆 Codeforces Glazer
+          <h1 className="text-4xl md:text-6xl font-bold text-dark-text mb-4">
+            Codeforces Glazer
           </h1>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-dark-textSecondary mb-8">
             Let AI praise your Codeforces profile and code submissions!
           </p>
         </div>
@@ -219,16 +219,16 @@ export default function Home() {
             <button 
               onClick={() => setActiveTab('profile')}
               className={`px-6 py-2 text-sm font-medium ${activeTab === 'profile' 
-                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'}`}
+                ? 'bg-cyan-300 text-slate-900' 
+                : 'text-dark-textSecondary hover:text-dark-text'}`}
             >
               Profile Glazer
             </button>
             <button 
               onClick={() => setActiveTab('code')}
               className={`px-6 py-2 text-sm font-medium ${activeTab === 'code' 
-                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'}`}
+                ? 'bg-cyan-300 text-slate-900' 
+                : 'text-dark-textSecondary hover:text-dark-text'}`}
             >
               Code Glazer
             </button>
@@ -249,7 +249,7 @@ export default function Home() {
               />
               
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="username" className="block text-sm font-medium text-dark-textSecondary mb-2">
                   Codeforces Username
                 </label>
                 <input
@@ -257,20 +257,20 @@ export default function Home() {
                   id="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 transition-all duration-200 text-white placeholder-gray-500"
                   placeholder="Enter your Codeforces handle..."
                   disabled={loading}
                   maxLength={24}
                 />
-                <p className="text-sm text-gray-400 mt-2">
-                  Each IP address can make 20 requests per day
+                <p className="text-sm text-dark-textSecondary mt-2">
+                  Each IP address can make 50 requests per day
                 </p>
               </div>
               
               <button
                 type="submit"
                 disabled={loading || !username.trim()}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg hover:shadow-xl"
+                className="w-full bg-cyan-300 text-slate-900 py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -299,36 +299,36 @@ export default function Home() {
                     <img 
                       src={userData.avatar} 
                       alt="Avatar" 
-                      className="w-16 h-16 rounded-full mr-4 ring-2 ring-purple-500/30"
+                      className="w-16 h-16 rounded-full mr-4 ring-2 ring-cyan-300/30"
                     />
                   )}
                   <div>
-                    <h2 className="text-2xl font-bold text-white">{userData.handle}</h2>
+                    <h2 className="text-2xl font-bold text-dark-text">{userData.handle}</h2>
                     {userData.rating && (
-                      <div className="text-lg text-gray-300">
-                        Rating: <span className="font-semibold text-purple-400">{userData.rating}</span>
+                      <div className="text-lg text-dark-textSecondary">
+                        Rating: <span className="font-semibold text-cyan-300">{userData.rating}</span>
                         {userData.maxRating && userData.maxRating !== userData.rating && (
-                          <span className="ml-2 text-sm text-gray-400">(Max: {userData.maxRating})</span>
+                          <span className="ml-2 text-sm text-dark-textSecondary">(Max: {userData.maxRating})</span>
                         )}
                       </div>
                     )}
                     {userData.rank && (
-                      <div className="text-sm text-gray-400 capitalize">{userData.rank}</div>
+                      <div className="text-sm text-dark-textSecondary capitalize">{userData.rank}</div>
                     )}
                   </div>
                 </div>
                 
                 <div className="prose prose-lg max-w-none">
-                  <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 p-6 rounded-lg border-l-4 border-yellow-500 backdrop-blur-sm">
+                  <div className="p-6 rounded-lg border-l-4 border-amber-400 bg-amber-900/20 backdrop-blur-sm">
                     <h3 className="text-xl font-bold text-yellow-300 mb-4 flex items-center">
                       Profile Evaluation
                       {tokensUsed > 0 && (
-                        <span className="ml-2 text-xs text-gray-400 font-normal">
+                        <span className="ml-2 text-xs text-dark-textSecondary font-normal">
                           ({tokensUsed} tokens used)
                         </span>
                       )}
                     </h3>
-                    <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+                    <div className="text-dark-text whitespace-pre-wrap leading-relaxed">
                       {result}
                     </div>
                   </div>
@@ -352,7 +352,7 @@ export default function Home() {
               />
               
               <div>
-                <label htmlFor="codeFile" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="codeFile" className="block text-sm font-medium text-dark-textSecondary mb-2">
                   Upload Your Codeforces Submission
                 </label>
                 <input
@@ -360,19 +360,16 @@ export default function Home() {
                   id="codeFile"
                   onChange={handleFileChange}
                   accept=".cpp,.c,.py,.java,.js,.rb,.go,.txt,.cs,.php"
-                  className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-700"
+                  className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg focus:ring-2 focus:ring-cyan-300 focus:border-cyan-300 transition-all duration-200 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cyan-300 file:text-slate-900 hover:file:bg-cyan-400"
                   disabled={codeLoading}
                 />
-                <p className="text-sm text-gray-400 mt-2">
-                  Max file size: 500KB. Supported file types: .cpp, .c, .py, .java, .js, .rb, .go, .txt, .cs, .php
-                </p>
               </div>
               
               <div className="flex space-x-4">
                 <button
                   type="submit"
                   disabled={codeLoading || !codeContent}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-cyan-300 text-slate-900 py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-200 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
                   {codeLoading ? (
                     <span className="flex items-center justify-center">
@@ -390,14 +387,14 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleClearCode}
-                  className="px-6 py-3 rounded-lg font-semibold text-gray-300 border border-gray-700 hover:bg-gray-800 transition-all duration-200"
+                  className="px-6 py-3 rounded-lg font-semibold text-dark-textSecondary border border-dark-border hover:bg-dark-cardHover transition-all duration-200"
                 >
                   Clear
                 </button>
               </div>
               
-              <p className="text-sm text-gray-400">
-                Each IP address can make 20 requests per day
+              <p className="text-sm text-dark-textSecondary">
+                Each IP address can make 50 requests per day
               </p>
             </form>
             
@@ -410,16 +407,16 @@ export default function Home() {
             {codeFile && codeGlaze && (
               <div className="mt-8">
                 <div className="prose prose-lg max-w-none">
-                  <div className="bg-gradient-to-r from-green-900/30 to-teal-900/30 p-6 rounded-lg border-l-4 border-green-500 backdrop-blur-sm">
+                  <div className="p-6 rounded-lg border-l-4 border-emerald-400 bg-emerald-900/20 backdrop-blur-sm">
                     <h3 className="text-xl font-bold text-green-300 mb-4 flex items-center">
                       Code Evaluation: {codeFile.name}
                       {codeTokensUsed > 0 && (
-                        <span className="ml-2 text-xs text-gray-400 font-normal">
+                        <span className="ml-2 text-xs text-dark-textSecondary font-normal">
                           ({codeTokensUsed} tokens used)
                         </span>
                       )}
                     </h3>
-                    <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+                    <div className="text-dark-text whitespace-pre-wrap leading-relaxed">
                       {codeGlaze}
                     </div>
                   </div>

@@ -15,15 +15,15 @@ module.exports = {
       },
       colors: {
         dark: {
-          bg: '#0f0f0f',
-          card: '#1a1a1a',
-          cardHover: '#252525',
-          text: '#ffffff',
-          textSecondary: '#b0b0b0',
-          border: '#333333',
+          bg: '#0b0f14',
+          card: '#10151b',
+          cardHover: '#151b23',
+          text: '#e6e8eb',
+          textSecondary: '#9aa4b2',
+          border: '#1f2937',
         }
       }
     },
   },
   plugins: [],
-} 
+}

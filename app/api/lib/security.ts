@@ -100,7 +100,7 @@ export async function checkIPRateLimit(ip: string): Promise<{ allowed: boolean; 
   
   const now = Date.now()
   const windowMs = 24 * 60 * 60 * 1000 // 24 hours (1 day)
-  const maxRequests = 20 // Max 20 requests per day per IP
+  const maxRequests = 50 // Max 50 requests per day per IP
   
   const key = `ip_limit:${ip}:${Math.floor(now / windowMs)}`
   
@@ -110,7 +110,7 @@ export async function checkIPRateLimit(ip: string): Promise<{ allowed: boolean; 
     if (current >= maxRequests) {
       return { 
         allowed: false, 
-        message: 'Daily request limit exceeded for this IP. You can make 20 requests per day.' 
+        message: 'Daily request limit exceeded for this IP. You can make 50 requests per day.' 
       }
     }
     

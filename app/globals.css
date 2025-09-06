@@ -3,24 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 15, 15, 15;
-  --background-end-rgb: 26, 26, 26;
+  --foreground-rgb: 230, 232, 235;
+  --background-start-rgb: 11, 15, 20;
+  --background-end-rgb: 16, 22, 34;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-end-rgb));
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .gradient-bg {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f0f23 75%, #0a0a0a 100%);
+  background: none;
 }
 
 .card-shadow {
@@ -37,14 +35,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #0f1622;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333333;
+  background: #2b3441;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444444;
-} 
+  background: #374151;
+}

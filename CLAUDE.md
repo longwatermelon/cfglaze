@@ -31,7 +31,7 @@ Codeforces Glazer is a Next.js 14 web application that generates enthusiastic AI
 - **Token API**: `app/api/tokens/route.ts` - Manages global OpenAI token usage tracking
 
 ### Key Features
-- **Rate Limiting**: 20 requests per IP per day using Vercel KV storage
+- **Rate Limiting**: 50 requests per IP per day using Vercel KV storage
 - **Global Token Tracking**: Daily 2M token limit with read-modify-write consistency
 - **Security**: Origin validation, user-agent filtering, honeypot fields
 - **File Uploads**: Code files up to 500KB with multiple language support
@@ -55,7 +55,7 @@ Required environment variables:
 ## Security Considerations
 
 The application implements multiple security layers:
-- IP-based rate limiting (20 requests/day)
+- IP-based rate limiting (50 requests/day)
 - Request origin validation for production
 - User-agent filtering to block bots
 - Honeypot fields for bot detection

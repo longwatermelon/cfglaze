@@ -95,7 +95,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📊 API Usage Limits
 
- - Each IP address can make up to 20 requests per day
+ - Each IP address can make up to 50 requests per day
 - File uploads are limited to 500KB to prevent abuse
 
 ## 💡 Future Improvements

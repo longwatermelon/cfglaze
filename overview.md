@@ -162,7 +162,6 @@ npm run dev
 - **API Rate Limiting**: Built-in handling for Codeforces API limits
 - **Modular Architecture**: Easy to extend with additional features
 - **Configuration**: Environment-based configuration for different deployments
-- **Token Usage Tracking**: Monitors and limits OpenAI API usage
 
 ## 🎉 Fun Factor
 

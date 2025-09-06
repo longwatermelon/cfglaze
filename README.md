@@ -96,7 +96,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📊 API Usage Limits
 
 - Each IP address can make up to 8 requests per day
-- The application has a global token limit to prevent excessive API usage
 - File uploads are limited to 500KB to prevent abuse
 
 ## 💡 Future Improvements

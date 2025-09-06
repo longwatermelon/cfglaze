@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { 
-  getGlobalTokensUsed, 
-  incrementGlobalTokensKV, 
-  backgroundReconciliation,
-  checkGlobalTokenLimit 
-} from '../lib/token-management'
+// Daily token limit removed: token management imports deleted
 import { 
   validateRequestOrigin, 
   validateUserAgent, 
@@ -292,14 +287,7 @@ ${profileData}
   return { content, tokensUsed }
 }
 
-function estimateTokenUsage(profileData: string): number {
-  // Rough estimation: 
-  // Input tokens: profile data length / 4 (rough character to token ratio)
-  // Output tokens: 2000 (max_tokens setting)
-  const inputTokens = Math.ceil(profileData.length / 4)
-  const outputTokens = 2000
-  return inputTokens + outputTokens
-}
+// Token usage estimation and limits removed
 
 
 
@@ -391,29 +379,8 @@ export async function POST(request: NextRequest) {
     // Format the data for OpenAI
     const profileData = formatUserData(userData, submissions)
     
-    // Estimate token usage
-    const estimatedTokens = estimateTokenUsage(profileData)
-    
-    // Check global token limit
-    const globalTokenResult = await checkGlobalTokenLimit(estimatedTokens)
-    if (!globalTokenResult.allowed) {
-      return NextResponse.json(
-        { error: globalTokenResult.message },
-        { status: 429 }
-      )
-    }
-
     // Generate the glaze using OpenAI
     const glazeResult = await generateGlaze(profileData)
-    
-    // Occasionally run background reconciliation (10% of requests)
-    // This helps maintain consistency
-    if (Math.random() < 0.1) {
-      backgroundReconciliation().catch(() => {})
-    }
-    
-    // Update global token counter with actual usage
-    await incrementGlobalTokensKV(glazeResult.tokensUsed)
     
     return NextResponse.json({
       glaze: glazeResult.content,

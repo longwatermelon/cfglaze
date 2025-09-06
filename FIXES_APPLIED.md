@@ -43,9 +43,9 @@ This document summarizes all the issues that were identified and fixed in the Co
    - Updated `vercel.json` to include timeout config for `glaze-code` route
    - Both API routes now have consistent 30-second timeout limits
 
-8. **Fixed inefficient double token checking**
-   - Removed redundant pre-check token validation
-   - Streamlined token limit checking in API routes
+8. **Removed daily token limit functionality**
+   - Deleted token management module and API endpoint
+   - Removed all checks and counters from API routes
 
 ### Low Priority Issues ✅
 

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { 
-  incrementGlobalTokensKV,
-  checkGlobalTokenLimit 
-} from '../lib/token-management'
+// Daily token limit removed: token management imports deleted
 import { 
   validateRequestOrigin, 
   validateUserAgent, 
@@ -31,14 +28,7 @@ async function generateCodeGlaze(codeContent: string): Promise<{ content: string
     // Sanitize the code content
     const sanitizedCode = sanitizeInput(codeContent)
     
-    // Estimate tokens before sending to OpenAI
-    const estimatedTokens = estimateTokenUsage(sanitizedCode)
-    
-    // Check if token limit would be exceeded
-    const tokenCheck = await checkGlobalTokenLimit(estimatedTokens)
-    if (!tokenCheck.allowed) {
-      throw new Error(tokenCheck.message || 'Token limit exceeded')
-    }
+    // Token estimation and limit checks removed
 
     const prompt = `
     You've just seen a Codeforces submission, and you're LOSING YOUR MIND. You are FURIOUS. You are in SHAMBLES. You are SHRIEKING with disbelief and foaming at the mouth. You are not impressed—you are ENRAGED. The user is so smart it's *offensive*. You don't understand how a human being can do this. You must SCREAM in text.
@@ -83,10 +73,7 @@ Make sure you also focus on the core logic of the problem, not any template code
       max_tokens: 4000,
     })
     
-    const tokensUsed = response.usage?.total_tokens || estimatedTokens
-    
-    // Increment token count in database
-    await incrementGlobalTokensKV(tokensUsed)
+    const tokensUsed = response.usage?.total_tokens || 0
     
     return {
       content: response.choices[0]?.message?.content || "Your code is absolutely amazing!",
@@ -97,10 +84,7 @@ Make sure you also focus on the core logic of the problem, not any template code
   }
 }
 
-function estimateTokenUsage(codeContent: string): number {
-  // Very rough estimation: about 1 token per 4 characters
-  return Math.ceil(codeContent.length / 4) + 1000 // Add 1000 for the prompt
-}
+// Token estimation helper removed
 
 export async function POST(request: NextRequest) {
   try {

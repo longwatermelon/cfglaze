@@ -263,7 +263,7 @@ export default function Home() {
                   maxLength={24}
                 />
                 <p className="text-sm text-gray-400 mt-2">
-                  Each IP address can make 8 requests per day
+                  Each IP address can make 20 requests per day
                 </p>
               </div>
               
@@ -397,7 +397,7 @@ export default function Home() {
               </div>
               
               <p className="text-sm text-gray-400">
-                Each IP address can make 8 requests per day
+                Each IP address can make 20 requests per day
               </p>
             </form>
             
